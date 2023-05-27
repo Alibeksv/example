@@ -1,0 +1,47 @@
+version: '3.5'
+
+services:
+    nginx:
+        image: ${PROJECT_NAME}_nginx:latest
+        build:
+            context: ./docker
+            dockerfile: ./nginx/Dockerfile
+            args:
+                - "BUILD_ARGUMENT_ENV=env"
+        container_name: ${PROJECT_NAME}_nginx
+        restart: always
+        ports:
+            - ${PROJECT_HTTP_PORT}:80
+        volumes:
+            - ".:/var/www/html"
+        depends_on:
+            - laravel
+        networks:
+            - laravel
+    laravel:
+        image: ${PROJECT_NAME}_laravel:latest
+        build:
+            context: ./docker/php
+            dockerfile: ./Dockerfile
+        container_name: ${PROJECT_NAME}_laravel
+        volumes:
+            - ".:/var/www/html"
+        networks:
+            - laravel
+    mysql:
+        image: mysql:latest
+        restart: unless-stopped
+        ports:
+            - "3306:3306"
+        volumes:
+            - ./mysql:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_USER: ${MYSQL_DATABASE_USER}
+            MYSQL_PASSWORD: ${MYSQL_DATABASE_PASSWORD}
+            MYSQL_DATABASE: ${MYSQL_DATABASE_NAME}
+        networks:
+            - laravel
+networks:
+    laravel:
+        name: laravel
